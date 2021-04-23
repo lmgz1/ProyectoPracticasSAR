@@ -21,11 +21,9 @@ class SAR_Project:
     fields = [("title", True), ("date", False),
               ("keywords", True), ("article", True),
               ("summary", True)]
-    
-    
+
     # numero maximo de documento a mostrar cuando self.show_all es False
     SHOW_MAX = 10
-
 
     def __init__(self):
         """
@@ -36,28 +34,26 @@ class SAR_Project:
         Puedes añadir más variables si las necesitas 
 
         """
-        self.index = {} # hash para el indice invertido de terminos --> clave: termino, valor: posting list.
-                        # Si se hace la implementacion multifield, se pude hacer un segundo nivel de hashing de tal forma que:
-                        # self.index['title'] seria el indice invertido del campo 'title'.
-        self.sindex = {} # hash para el indice invertido de stems --> clave: stem, valor: lista con los terminos que tienen ese stem
-        self.ptindex = {} # hash para el indice permuterm.
-        self.docs = {} # diccionario de documentos --> clave: entero(docid),  valor: ruta del fichero.
-        self.weight = {} # hash de terminos para el pesado, ranking de resultados. puede no utilizarse
-        self.news = {} # hash de noticias --> clave entero (newid), valor: la info necesaria para diferenciar la noticia dentro de su fichero (doc_id y posición dentro del documento)
-        self.tokenizer = re.compile("\W+") # expresion regular para hacer la tokenizacion
-        self.stemmer = SnowballStemmer('spanish') # stemmer en castellano
-        self.show_all = False # valor por defecto, se cambia con self.set_showall()
-        self.show_snippet = False # valor por defecto, se cambia con self.set_snippet()
-        self.use_stemming = False # valor por defecto, se cambia con self.set_stemming()
+        self.index = {}  # hash para el indice invertido de terminos --> clave: termino, valor: posting list.
+        # Si se hace la implementacion multifield, se pude hacer un segundo nivel de hashing de tal forma que:
+        # self.index['title'] seria el indice invertido del campo 'title'.
+        self.sindex = {}  # hash para el indice invertido de stems --> clave: stem, valor: lista con los terminos que tienen ese stem
+        self.ptindex = {}  # hash para el indice permuterm.
+        self.docs = {}  # diccionario de documentos --> clave: entero(docid),  valor: ruta del fichero.
+        self.weight = {}  # hash de terminos para el pesado, ranking de resultados. puede no utilizarse
+        self.news = {}  # hash de noticias --> clave entero (newid), valor: la info necesaria para diferenciar la noticia dentro de su fichero (doc_id y posición dentro del documento)
+        self.tokenizer = re.compile("\W+")  # expresion regular para hacer la tokenizacion
+        self.stemmer = SnowballStemmer('spanish')  # stemmer en castellano
+        self.show_all = False  # valor por defecto, se cambia con self.set_showall()
+        self.show_snippet = False  # valor por defecto, se cambia con self.set_snippet()
+        self.use_stemming = False  # valor por defecto, se cambia con self.set_stemming()
         self.use_ranking = False  # valor por defecto, se cambia con self.set_ranking()
-
 
     ###############################
     ###                         ###
     ###      CONFIGURACION      ###
     ###                         ###
     ###############################
-
 
     def set_showall(self, v):
         """
@@ -73,7 +69,6 @@ class SAR_Project:
         """
         self.show_all = v
 
-
     def set_snippet(self, v):
         """
 
@@ -87,7 +82,6 @@ class SAR_Project:
 
         """
         self.show_snippet = v
-
 
     def set_stemming(self, v):
         """
@@ -103,7 +97,6 @@ class SAR_Project:
         """
         self.use_stemming = v
 
-
     def set_ranking(self, v):
         """
 
@@ -118,15 +111,11 @@ class SAR_Project:
         """
         self.use_ranking = v
 
-
-
-
     ###############################
     ###                         ###
     ###   PARTE 1: INDEXACION   ###
     ###                         ###
     ###############################
-
 
     def index_dir(self, root, **args):
         """
@@ -151,7 +140,6 @@ class SAR_Project:
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
-        
 
     def index_file(self, filename):
         """
@@ -169,8 +157,17 @@ class SAR_Project:
 
         """
 
+        doc_id = len(self.docs.keys())
+        self.docs[doc_id] = filename
+
         with open(filename) as fh:
             jlist = json.load(fh)
+            for i, article in enumerate([new["article"] for new in jlist]):
+                for token in set(self.tokenize(article)):  # set() para eliminar repetidas
+                    if token not in self.index:
+                        self.index[token] = [f"{doc_id}-{i}"]
+                    else:
+                        self.index[token].append(f"{doc_id}-{i}")
 
         #
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
@@ -184,8 +181,6 @@ class SAR_Project:
         #################
         ### COMPLETAR ###
         #################
-
-
 
     def tokenize(self, text):
         """
@@ -201,8 +196,6 @@ class SAR_Project:
         """
         return self.tokenizer.sub(' ', text.lower()).split()
 
-
-
     def make_stemming(self):
         """
         NECESARIO PARA LA AMPLIACION DE STEMMING.
@@ -212,14 +205,12 @@ class SAR_Project:
         self.stemmer.stem(token) devuelve el stem del token
 
         """
-        
+
         pass
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
 
-
-    
     def make_permuterm(self):
         """
         NECESARIO PARA LA AMPLIACION DE PERMUTERM
@@ -231,9 +222,6 @@ class SAR_Project:
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
-
-
-
 
     def show_stats(self):
         """
@@ -247,21 +235,11 @@ class SAR_Project:
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
-        
-
-
-
-
-
-
-
-
     ###################################
     ###                             ###
     ###   PARTE 2.1: RECUPERACION   ###
     ###                             ###
     ###################################
-
 
     def solve_query(self, query, prev={}):
         """
@@ -286,9 +264,6 @@ class SAR_Project:
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
- 
-
-
     def get_posting(self, term, field='article'):
         """
         NECESARIO PARA TODAS LAS VERSIONES
@@ -311,8 +286,6 @@ class SAR_Project:
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
-
-
     def get_positionals(self, terms, field='article'):
         """
         NECESARIO PARA LA AMPLIACION DE POSICIONALES
@@ -330,7 +303,6 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE POSICIONALES ##
         ########################################################
 
-
     def get_stemming(self, term, field='article'):
         """
         NECESARIO PARA LA AMPLIACION DE STEMMING
@@ -343,13 +315,12 @@ class SAR_Project:
         return: posting list
 
         """
-        
+
         stem = self.stemmer.stem(term)
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
-
 
     def get_permuterm(self, term, field='article'):
         """
@@ -368,9 +339,6 @@ class SAR_Project:
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
         ##################################################
 
-
-
-
     def reverse_posting(self, p):
         """
         NECESARIO PARA TODAS LAS VERSIONES
@@ -385,13 +353,11 @@ class SAR_Project:
         return: posting list con todos los newid exceptos los contenidos en p
 
         """
-        
+
         pass
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
-
 
     def and_posting(self, p1, p2):
         """
@@ -405,13 +371,11 @@ class SAR_Project:
         return: posting list con los newid incluidos en p1 y p2
 
         """
-        
+
         pass
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
-
 
     def or_posting(self, p1, p2):
         """
@@ -426,12 +390,10 @@ class SAR_Project:
 
         """
 
-        
         pass
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
 
     def minus_posting(self, p1, p2):
         """
@@ -447,22 +409,16 @@ class SAR_Project:
 
         """
 
-        
         pass
         ########################################################
         ## COMPLETAR PARA TODAS LAS VERSIONES SI ES NECESARIO ##
         ########################################################
-
-
-
-
 
     #####################################
     ###                               ###
     ### PARTE 2.2: MOSTRAR RESULTADOS ###
     ###                               ###
     #####################################
-
 
     def solve_and_count(self, query):
         """
@@ -478,7 +434,6 @@ class SAR_Project:
         result = self.solve_query(query)
         print("%s\t%d" % (query, len(result)))
         return len(result)  # para verificar los resultados (op: -T)
-
 
     def solve_and_show(self, query):
         """
@@ -497,14 +452,11 @@ class SAR_Project:
         """
         result = self.solve_query(query)
         if self.use_ranking:
-            result = self.rank_result(result, query)   
+            result = self.rank_result(result, query)
 
-        ########################################
+            ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
-
-
-
 
     def rank_result(self, result, query):
         """
@@ -521,7 +473,7 @@ class SAR_Project:
         """
 
         pass
-        
+
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
         ###################################################
