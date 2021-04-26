@@ -356,6 +356,15 @@ class SAR_Project:
         return: posting list con todos los newid exceptos los contenidos en p
 
         """
+        r = []
+        news = list(self.news.keys())
+        
+        for i in news:
+            if news[i] not in p:
+                r.append(news[i])
+                
+        return r
+        
 
         pass
         ########################################
@@ -369,11 +378,39 @@ class SAR_Project:
         Calcula el AND de dos posting list de forma EFICIENTE
 
         param:  "p1", "p2": posting lists sobre las que calcular
-
+        
 
         return: posting list con los newid incluidos en p1 y p2
+        
+        Estrategia :
+            
+        respuesta ← {}
+        mientras No_FINAL( p1) AND No_FINAL( p2)
+            hacer si docID (p1) = docID (p2)
+                entonces Añadir (respuesta, docID (p1))
+                p1 ← Avanzar_Siguiente(p1)
+                p2 ← Avanzar_Siguiente(p2)
+            sino si docID (p1) < docID (p2)
+                entonces p1 ← Avanzar_Siguiente(p1)
+            sino
+                p2 ← Avanzar_Siguiente(p2)
 
         """
+        
+        r = []
+        i, j = 0
+        while i < len(p1) and j < len(p2):
+            if (p1[i] == p2[j]):    # La comparación no debe dar problemas aún siendo strings #
+                r.append(p1[i])     # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
+                i = i + 1           # siendo el primero alfanumericamente inferior al segundo #
+                j = j + 1
+            elif (p1[i] < p2[j]):
+                i = i + 1
+            else:
+                j = j + 1
+                
+        return r
+                
 
         pass
         ########################################
@@ -390,9 +427,58 @@ class SAR_Project:
 
 
         return: posting list con los newid incluidos de p1 o p2
+        
+        Estrategia:
+            
+
+        respuesta ← {}
+        mientras No_FINAL( p1) AND No_FINAL( p2)
+            hacer si docID (p1) = docID (p2)
+                entonces Añadir (respuesta, docID (p1))
+                p1 ← Avanzar_Siguiente(p1)
+                p2 ← Avanzar_Siguiente(p2)
+            sino si docID (p1) < docID (p2)
+                entonces Añadir (respuesta, docID (p1))
+                p1 ← Avanzar_Siguiente(p1)
+            sino 
+            Añadir (respuesta, docID (p2))
+                p2 ← Avanzar_Siguiente(p2)
+        
+        mientras No_FINAL( p1)
+            hacer Añadir (respuesta, docID (p1))
+            p1 ← Avanzar_Siguiente(p1)
+                
+        mientras No_FINAL( p2)
+            hacer Añadir (respuesta, docID (p2))
+            p2 ← Avanzar_Siguiente(p2)
 
         """
-
+        
+        r = []
+        i, j = 0
+        while i < len(p1) and j < len(p2):
+            if (p1[i] == p2[j]):    # La comparación no debe dar problemas aún siendo strings #
+                r.append(p1[i])     # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
+                i = i + 1           # siendo el primero alfanumericamente inferior al segundo #
+                j = j + 1
+            elif p1[i] < p2[j]:
+                r.append(p1[i])
+                i = i + 1
+            else:
+                r.append(p2[j])
+                j = j + 1
+        
+        while i < len(p1):          # Bucle que vacia la p1
+            r.append(p1[i])
+            i = i + 1
+        
+        while j < len(p2):          # Bucle que vacia la p2
+            r.append(p2[j])
+            j = j + 1
+            
+        return r
+        
+    
         pass
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
