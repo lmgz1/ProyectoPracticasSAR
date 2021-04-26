@@ -158,16 +158,19 @@ class SAR_Project:
         """
 
         doc_id = len(self.docs.keys())
+        new_id = len(self.news.keys())
         self.docs[doc_id] = filename
 
         with open(filename) as fh:
             jlist = json.load(fh)
             for i, article in enumerate([new["article"] for new in jlist]):
+                self.news[new_id] = (doc_id, i)
                 for token in set(self.tokenize(article)):  # set() para eliminar repetidas
                     if token not in self.index:
-                        self.index[token] = [f"{doc_id}-{i}"]
+                        self.index[token] = [new_id]
                     else:
-                        self.index[token].append(f"{doc_id}-{i}")
+                        self.index[token].append(new_id)
+                new_id += 1
 
         #
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
