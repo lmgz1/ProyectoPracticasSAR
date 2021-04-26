@@ -4,6 +4,7 @@ import os
 import re
 
 
+
 class SAR_Project:
     """
     Prototipo de la clase para realizar la indexacion y la recuperacion de noticias
@@ -24,6 +25,8 @@ class SAR_Project:
 
     # numero maximo de documento a mostrar cuando self.show_all es False
     SHOW_MAX = 10
+
+
 
     def __init__(self):
         """
@@ -49,6 +52,8 @@ class SAR_Project:
         self.use_stemming = False  # valor por defecto, se cambia con self.set_stemming()
         self.use_ranking = False  # valor por defecto, se cambia con self.set_ranking()
 
+
+
     ###############################
     ###                         ###
     ###      CONFIGURACION      ###
@@ -69,6 +74,8 @@ class SAR_Project:
         """
         self.show_all = v
 
+
+
     def set_snippet(self, v):
         """
 
@@ -82,6 +89,8 @@ class SAR_Project:
 
         """
         self.show_snippet = v
+
+
 
     def set_stemming(self, v):
         """
@@ -97,6 +106,8 @@ class SAR_Project:
         """
         self.use_stemming = v
 
+
+
     def set_ranking(self, v):
         """
 
@@ -110,6 +121,8 @@ class SAR_Project:
 
         """
         self.use_ranking = v
+
+
 
     ###############################
     ###                         ###
@@ -136,6 +149,8 @@ class SAR_Project:
                 if filename.endswith('.json'):
                     fullname = os.path.join(dir, filename)
                     self.index_file(fullname)
+
+
 
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
@@ -181,6 +196,9 @@ class SAR_Project:
         #
         #
         #
+
+
+
         #################
         ### COMPLETAR ###
         #################
@@ -199,6 +217,8 @@ class SAR_Project:
         """
         return self.tokenizer.sub(' ', text.lower()).split()
 
+
+
     def make_stemming(self):
         """
         NECESARIO PARA LA AMPLIACION DE STEMMING.
@@ -210,6 +230,9 @@ class SAR_Project:
         """
 
         pass
+
+
+
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -222,6 +245,9 @@ class SAR_Project:
 
         """
         pass
+
+
+
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -234,6 +260,8 @@ class SAR_Project:
         
         """
         pass
+
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -263,6 +291,45 @@ class SAR_Project:
         if query is None or len(query) == 0:
             return []
 
+        if len(query) == 1:
+            return self.get_posting(query)
+
+        reg = re.compile(r"\w+")
+        tokens = reg.findall(query)
+
+        firstToken = tokens(0)
+        # Si el primer elemento no es un token, sino un conector 'NOT'
+        if firstToken == 'NOT':
+            connector = firstToken
+            firstToken = tokens.pop(0)
+            firstPosting = self.get_posting(firstToken)
+            firstPosting = self.reverse_posting(firstToken)
+        # Si el primer elemento es un token
+        else:
+            firstPosting = self.get_posting(firstToken)
+
+        while len(tokens) > 1:
+            connector = tokens.pop(0)
+            nextToken = tokens.pop(0)
+
+            # Si el siguiente elemento no es un token, sino un conector 'NOT'
+            if nextToken == 'NOT':
+                nextToken = tokens.pop(0)
+                nextPosting = self.get_posting(nextToken)
+                nextPosting = self.reverse_posting(nextToken)
+            # Si el siguiente elemento es un token
+            else:
+                nextPosting = self.get_posting(nextToken)
+
+            # Según el conector de la solicitud
+            if connector == 'AND':
+                firstPosting = self.and_posting(firstPosting, nextPosting)
+            if connector == 'OR':
+                firstPosting = self.or_posting(firstPosting, nextPosting)
+                
+        return firstPosting
+
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -279,12 +346,15 @@ class SAR_Project:
 
 
         param:  "term": termino del que se debe recuperar la posting list.
-                "field": campo sobre el que se debe recuperar la posting list, solo necesario se se hace la ampliacion de multiples indices
+                "field": campo sobre el que se debe recuperar la posting list, solo necesario si se hace la ampliacion de multiples indices
 
         return: posting list
 
         """
-        pass
+        return self.index.get(term)
+
+
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -302,6 +372,9 @@ class SAR_Project:
 
         """
         pass
+
+
+
         ########################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE POSICIONALES ##
         ########################################################
@@ -321,6 +394,8 @@ class SAR_Project:
 
         stem = self.stemmer.stem(term)
 
+
+
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -337,6 +412,8 @@ class SAR_Project:
         return: posting list
 
         """
+
+
 
         ##################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
@@ -364,9 +441,9 @@ class SAR_Project:
                 r.append(news[i])
                 
         return r
-        
 
-        pass
+
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -412,7 +489,7 @@ class SAR_Project:
         return r
                 
 
-        pass
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -479,7 +556,7 @@ class SAR_Project:
         return r
         
     
-        pass
+
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -499,6 +576,9 @@ class SAR_Project:
         """
 
         pass
+
+
+
         ########################################################
         ## COMPLETAR PARA TODAS LAS VERSIONES SI ES NECESARIO ##
         ########################################################
@@ -524,6 +604,8 @@ class SAR_Project:
         print("%s\t%d" % (query, len(result)))
         return len(result)  # para verificar los resultados (op: -T)
 
+
+
     def solve_and_show(self, query):
         """
         NECESARIO PARA TODAS LAS VERSIONES
@@ -543,7 +625,9 @@ class SAR_Project:
         if self.use_ranking:
             result = self.rank_result(result, query)
 
-            ########################################
+
+
+        ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
 
@@ -562,6 +646,8 @@ class SAR_Project:
         """
 
         pass
+
+
 
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
