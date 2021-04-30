@@ -4,7 +4,6 @@ import os
 import re
 
 
-
 class SAR_Project:
     """
     Prototipo de la clase para realizar la indexacion y la recuperacion de noticias
@@ -25,8 +24,6 @@ class SAR_Project:
 
     # numero maximo de documento a mostrar cuando self.show_all es False
     SHOW_MAX = 10
-
-
 
     def __init__(self):
         """
@@ -52,8 +49,6 @@ class SAR_Project:
         self.use_stemming = False  # valor por defecto, se cambia con self.set_stemming()
         self.use_ranking = False  # valor por defecto, se cambia con self.set_ranking()
 
-
-
     ###############################
     ###                         ###
     ###      CONFIGURACION      ###
@@ -74,8 +69,6 @@ class SAR_Project:
         """
         self.show_all = v
 
-
-
     def set_snippet(self, v):
         """
 
@@ -89,8 +82,6 @@ class SAR_Project:
 
         """
         self.show_snippet = v
-
-
 
     def set_stemming(self, v):
         """
@@ -106,8 +97,6 @@ class SAR_Project:
         """
         self.use_stemming = v
 
-
-
     def set_ranking(self, v):
         """
 
@@ -121,8 +110,6 @@ class SAR_Project:
 
         """
         self.use_ranking = v
-
-
 
     ###############################
     ###                         ###
@@ -149,8 +136,6 @@ class SAR_Project:
                 if filename.endswith('.json'):
                     fullname = os.path.join(dir, filename)
                     self.index_file(fullname)
-
-
 
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
@@ -197,8 +182,6 @@ class SAR_Project:
         #
         #
 
-
-
         #################
         ### COMPLETAR ###
         #################
@@ -217,8 +200,6 @@ class SAR_Project:
         """
         return self.tokenizer.sub(' ', text.lower()).split()
 
-
-
     def make_stemming(self):
         """
         NECESARIO PARA LA AMPLIACION DE STEMMING.
@@ -230,8 +211,6 @@ class SAR_Project:
         """
 
         pass
-
-
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
@@ -246,8 +225,6 @@ class SAR_Project:
         """
         pass
 
-
-
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -260,7 +237,6 @@ class SAR_Project:
         
         """
         pass
-
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -297,13 +273,13 @@ class SAR_Project:
         reg = re.compile(r"\w+")
         tokens = reg.findall(query)
 
-        firstToken = tokens(0)
+        firstToken = tokens.pop(0)
         # Si el primer elemento no es un token, sino un conector 'NOT'
         if firstToken == 'NOT':
             connector = firstToken
             firstToken = tokens.pop(0)
             firstPosting = self.get_posting(firstToken)
-            firstPosting = self.reverse_posting(firstToken)
+            firstPosting = self.reverse_posting(firstPosting)
         # Si el primer elemento es un token
         else:
             firstPosting = self.get_posting(firstToken)
@@ -316,7 +292,7 @@ class SAR_Project:
             if nextToken == 'NOT':
                 nextToken = tokens.pop(0)
                 nextPosting = self.get_posting(nextToken)
-                nextPosting = self.reverse_posting(nextToken)
+                nextPosting = self.reverse_posting(nextPosting)
             # Si el siguiente elemento es un token
             else:
                 nextPosting = self.get_posting(nextToken)
@@ -326,13 +302,67 @@ class SAR_Project:
                 firstPosting = self.and_posting(firstPosting, nextPosting)
             if connector == 'OR':
                 firstPosting = self.or_posting(firstPosting, nextPosting)
-                
-        return firstPosting
 
+        return firstPosting
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
+
+    def solve_query_parenthesis(self, query, prev={}):
+        """
+        Resuelve una query con parentesis.
+        Debe realizar el parsing de consulta que sera mas o menos complicado en funcion de la ampliacion que se implementen
+
+
+        param:  "query": cadena con la query
+                "prev": incluido por si se quiere hacer una version recursiva. No es necesario utilizarlo.
+
+
+        return: posting list con el resultado de la query
+
+        """
+        tokenized = re.findall("(\(|\)|[\w|:]+)", query)
+        return self._solve_query_parenthesis(tokenized)
+
+    def _solve_query_parenthesis(self, query):
+        value = []
+        conjunction = "OR"
+        negation = False
+        i = 0
+        while i < len(query):
+            token = query[i]
+            if token == "(":
+                n = 1
+                i += 1
+                n_query = []
+                while n > 0:
+                    if query[i] == "(":
+                        n += 1
+                    elif query[i] == ")":
+                        n -= 1
+                    n_query.append(query[i])
+                b = self._solve_query_parenthesis(n_query)
+                value = self.operate(value, b, conjunction, negation)
+                negation = False
+            elif token == "NOT":
+                negation = True
+            elif token == "AND" or token == "OR":
+                conjunction = token
+            else:
+                value = self.operate(value, self.get_posting(token), conjunction, negation)
+            i += 1
+        return value
+
+
+    def operate(self, a, b, op, not_b):
+        if not_b:
+            b = self.reverse_posting(b)
+        if op == "AND":
+            return self.and_posting(a, b)
+        elif op == "OR":
+            return self.or_posting(a, b)
+
 
     def get_posting(self, term, field='article'):
         """
@@ -353,8 +383,6 @@ class SAR_Project:
         """
         return self.index.get(term)
 
-
-
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -372,8 +400,6 @@ class SAR_Project:
 
         """
         pass
-
-
 
         ########################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE POSICIONALES ##
@@ -394,8 +420,6 @@ class SAR_Project:
 
         stem = self.stemmer.stem(term)
 
-
-
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
@@ -412,8 +436,6 @@ class SAR_Project:
         return: posting list
 
         """
-
-
 
         ##################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
@@ -435,14 +457,12 @@ class SAR_Project:
         """
         r = []
         news = list(self.news.keys())
-        
+
         for i in news:
             if news[i] not in p:
                 r.append(news[i])
-                
+
         return r
-
-
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -473,22 +493,20 @@ class SAR_Project:
                 p2 ← Avanzar_Siguiente(p2)
 
         """
-        
+
         r = []
-        i, j = 0
+        i = j = 0
         while i < len(p1) and j < len(p2):
-            if (p1[i] == p2[j]):    # La comparación no debe dar problemas aún siendo strings #
-                r.append(p1[i])     # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
-                i = i + 1           # siendo el primero alfanumericamente inferior al segundo #
+            if (p1[i] == p2[j]):  # La comparación no debe dar problemas aún siendo strings #
+                r.append(p1[i])  # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
+                i = i + 1  # siendo el primero alfanumericamente inferior al segundo #
                 j = j + 1
             elif (p1[i] < p2[j]):
                 i = i + 1
             else:
                 j = j + 1
-                
-        return r
-                
 
+        return r
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -530,13 +548,13 @@ class SAR_Project:
             p2 ← Avanzar_Siguiente(p2)
 
         """
-        
+
         r = []
-        i, j = 0
+        i = j = 0
         while i < len(p1) and j < len(p2):
-            if (p1[i] == p2[j]):    # La comparación no debe dar problemas aún siendo strings #
-                r.append(p1[i])     # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
-                i = i + 1           # siendo el primero alfanumericamente inferior al segundo #
+            if (p1[i] == p2[j]):  # La comparación no debe dar problemas aún siendo strings #
+                r.append(p1[i])  # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
+                i = i + 1  # siendo el primero alfanumericamente inferior al segundo #
                 j = j + 1
             elif p1[i] < p2[j]:
                 r.append(p1[i])
@@ -544,18 +562,16 @@ class SAR_Project:
             else:
                 r.append(p2[j])
                 j = j + 1
-        
-        while i < len(p1):          # Bucle que vacia la p1
+
+        while i < len(p1):  # Bucle que vacia la p1
             r.append(p1[i])
             i = i + 1
-        
-        while j < len(p2):          # Bucle que vacia la p2
+
+        while j < len(p2):  # Bucle que vacia la p2
             r.append(p2[j])
             j = j + 1
-            
+
         return r
-        
-    
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -576,8 +592,6 @@ class SAR_Project:
         """
 
         pass
-
-
 
         ########################################################
         ## COMPLETAR PARA TODAS LAS VERSIONES SI ES NECESARIO ##
@@ -604,8 +618,6 @@ class SAR_Project:
         print("%s\t%d" % (query, len(result)))
         return len(result)  # para verificar los resultados (op: -T)
 
-
-
     def solve_and_show(self, query):
         """
         NECESARIO PARA TODAS LAS VERSIONES
@@ -624,8 +636,6 @@ class SAR_Project:
         result = self.solve_query(query)
         if self.use_ranking:
             result = self.rank_result(result, query)
-
-
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -646,8 +656,6 @@ class SAR_Project:
         """
 
         pass
-
-
 
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
