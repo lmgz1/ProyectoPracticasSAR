@@ -622,11 +622,12 @@ class SAR_Project:
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
-        Resuelve una consulta y la muestra informacion de las noticias recuperadas.
+        Resuelve una consulta y la muestra informacion de las noticias recuperadas. Para ello a partir de la posting list proporcionada por solve_query extraemos
+        la ruta al fichero JSON asociado a cada noticia correspondiente y extraemos la información necesaria
         Consideraciones:
 
         - En funcion del valor de "self.show_snippet" se mostrara una informacion u otra.
-        - Si se implementa la opcion de ranking y en funcion del valor de self.use_ranking debera llamar a self.rank_result
+        - Si se implementa la opcion de ranking y en funcion del valor de self.use_ranking debera llamar a self.rank_result        
 
         param:  "query": query que se debe resolver.
 
@@ -637,6 +638,22 @@ class SAR_Project:
         if self.use_ranking:
             result = self.rank_result(result, query)
 
+        print('========================================')
+        print('Query: '+str(query)+'\n')
+        print('Number of results: '+str(len(result))+'\n')
+        i=0
+        
+        for noticia in result:
+            i=1+i
+            fileId   = self.news[noticia]
+            with open(self.docs[fileId[0]]) as f:
+                jsonNoticia = json.load(f)            
+            jsonNoticia=jsonNoticia[fileId[1]]
+            print('#%s  (0) (%s) (%s) %s: (%s)  \n'%(i,noticia,jsonNoticia['date'],jsonNoticia['title'],jsonNoticia['keywords']))
+            if(self.show_snippet):
+                print('Summary: %s \n'%(jsonNoticia['summary']))
+        print('========================================')
+        return len(result)
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
