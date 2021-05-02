@@ -622,11 +622,12 @@ class SAR_Project:
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
-        Resuelve una consulta y la muestra informacion de las noticias recuperadas.
+        Resuelve una consulta y la muestra informacion de las noticias recuperadas. Para ello a partir de la posting list proporcionada por solve_query extraemos
+        la ruta al fichero JSON asociado a cada noticia correspondiente y extraemos la información necesaria
         Consideraciones:
 
         - En funcion del valor de "self.show_snippet" se mostrara una informacion u otra.
-        - Si se implementa la opcion de ranking y en funcion del valor de self.use_ranking debera llamar a self.rank_result
+        - Si se implementa la opcion de ranking y en funcion del valor de self.use_ranking debera llamar a self.rank_result        
 
         param:  "query": query que se debe resolver.
 
