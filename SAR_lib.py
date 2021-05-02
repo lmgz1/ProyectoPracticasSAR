@@ -140,6 +140,11 @@ class SAR_Project:
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
+        
+        ####    STEEMING, BORJA   #####
+        if self.use_stemming :
+            self.make_stemming()
+        ####
 
     def index_file(self, filename):
         """
@@ -181,7 +186,7 @@ class SAR_Project:
         #
         #
         #
-
+        
         #################
         ### COMPLETAR ###
         #################
@@ -209,13 +214,28 @@ class SAR_Project:
         self.stemmer.stem(token) devuelve el stem del token
 
         """
+        
+        ## Por cada token del índice...
+        for token in self.index:
+            
+            ## Genero su stem.
+            stemmedtoken = self.stemmer.stem(token)
+            
+            ## Si no tengo el stem en el índice de stems, lo añado creándo una lista con el token.
+            if self.sindex.get(stemmedtoken) == None:
+                self.sindex[stemmedtoken] = [token]
+                
+            ## Si tengo el stem en el índice de stems, significa que el stem del token es equivalente 
+            ## al stem de otro token ya añadido, por lo tanto añado el token a la lista de tal stem.
+            else :
+                self.sindex[stemmedtoken].append(token)
 
-        pass
+        
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
-
+        
     def make_permuterm(self):
         """
         NECESARIO PARA LA AMPLIACION DE PERMUTERM
@@ -381,6 +401,12 @@ class SAR_Project:
         return: posting list
 
         """
+        
+        ### STEMMING ### BORJA ###
+        if self.use_stemming :
+            return self.get_stemming(term)
+        ###         
+        
         return self.index.get(term)
 
         ########################################
@@ -418,7 +444,28 @@ class SAR_Project:
 
         """
 
+        # Generamos el stem del termino.
         stem = self.stemmer.stem(term)
+        # Consultamos la lista de terminos pertenecientes a dicho stem.
+        tokens = self.sindex.get(stem)
+        listapostings =[]
+        
+        # Recorremos la lista de terminos.
+        for token in tokens:
+            
+            # Obtenemos la posting list de cada termino con el mismo stem y las concatenamos
+            listapostings.append(self.index.get(token))
+            
+            # Eliminamos newid repetidos con la siguiente instrucción, al convertir a dict quitamos repetidos y
+            # lo volvemos a convertir a lista
+            r = list(dict.fromkeys(listapostings))
+            
+            # Ordenamos la lista
+            r.sort()
+            
+        return r
+            
+               
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
@@ -647,8 +694,8 @@ class SAR_Project:
 
         Ordena los resultados de una query.
 
-        param:  "result": lista de resultados sin ordenar
-                "query": query, puede ser la query original, la query procesada o una lista de terminos
+        param:  "result": lista de resultados sin ordenar , postinglist sin ordenar.
+                "query": query, puede ser la query original, la query procesada o una lista de terminos. Query original en este caso.
 
 
         return: la lista de resultados ordenada
@@ -656,7 +703,6 @@ class SAR_Project:
         """
 
         pass
-
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
         ###################################################
