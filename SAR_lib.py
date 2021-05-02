@@ -637,6 +637,22 @@ class SAR_Project:
         if self.use_ranking:
             result = self.rank_result(result, query)
 
+        print('========================================')
+        print('Query: '+str(query)+'\n')
+        print('Number of results: '+str(len(result))+'\n')
+        i=0
+        
+        for noticia in result:
+            i=1+i
+            fileId   = self.news[noticia]
+            with open(self.docs[fileId[0]]) as f:
+                jsonNoticia = json.load(f)            
+            jsonNoticia=jsonNoticia[fileId[1]]
+            print('#%s  (0) (%s) (%s) %s: (%s)  \n'%(i,noticia,jsonNoticia['date'],jsonNoticia['title'],jsonNoticia['keywords']))
+            if(self.show_snippet):
+                print('Summary: %s \n'%(jsonNoticia['summary']))
+        print('========================================')
+        return len(result)
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
