@@ -223,7 +223,24 @@ class SAR_Project:
         Crea el indice permuterm (self.ptindex) para los terminos de todos los indices.
 
         """
-        pass
+        # Por cada token en el índice, añadimos el símbolo '$' como delimitador
+        # Para cada longitud y rotación posible que contenga el símbolo '$',
+        # # se crea una entrada y se añade el token a la lista
+        for token in self.index.keys():
+            pterm = token + '$'
+            for i in range(len(pterm)):
+                for j in range(0, len(pterm) - 1):
+                    item = pterm[j:]
+                    if '$' in item:
+                        # Si ya existe en el índice permuterm, añadimos el token a su lista
+                        if item in self.ptindex.keys():
+                            self.ptindex[item] = self.ptindex.get(item).append(token)
+                        # Y si no existía, se crea una entrada, con una lista de tokens
+                        else:
+                            self.ptindex[item] = [token]
+                # Siguiente rotación del token
+                pterm = pterm[1:] + pterm[0]
+
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
@@ -279,7 +296,7 @@ class SAR_Project:
             connector = firstToken
             firstToken = tokens.pop(0)
             firstPosting = self.get_posting(firstToken)
-            firstPosting = self.reverse_posting(firstPosting)
+            firstPosting = self.reverse_posting(firstToken)
         # Si el primer elemento es un token
         else:
             firstPosting = self.get_posting(firstToken)
