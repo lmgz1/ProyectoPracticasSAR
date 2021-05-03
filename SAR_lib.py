@@ -171,7 +171,9 @@ class SAR_Project:
                     else:
                         self.index[token].append(new_id)
                 new_id += 1
-
+        
+        make_permuterm()
+        
         #
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # cada noticia es un diccionario con los campos:
@@ -234,7 +236,7 @@ class SAR_Project:
                     if '$' in item:
                         # Si ya existe en el índice permuterm, añadimos el token a su lista
                         if item in self.ptindex.keys():
-                            self.ptindex[item] = self.ptindex.get(item).append(token)
+                            self.ptindex[item] = self.ptindex[item].append(token)
                         # Y si no existía, se crea una entrada, con una lista de tokens
                         else:
                             self.ptindex[item] = [token]
@@ -285,6 +287,8 @@ class SAR_Project:
             return []
 
         if len(query) == 1:
+            if '?' or '*' in query:
+                return self.get_permuterm(query)
             return self.get_posting(query)
 
         reg = re.compile(r"\w+")
@@ -295,8 +299,11 @@ class SAR_Project:
         if firstToken == 'NOT':
             connector = firstToken
             firstToken = tokens.pop(0)
-            firstPosting = self.get_posting(firstToken)
-            firstPosting = self.reverse_posting(firstToken)
+            if '?' or '*' in firstToken:
+                firstPosting = self.get_permuterm(firstToken)
+            else:
+                firstPosting = self.get_posting(firstToken)
+            firstPosting = self.reverse_posting(firstPosting)
         # Si el primer elemento es un token
         else:
             firstPosting = self.get_posting(firstToken)
@@ -308,7 +315,10 @@ class SAR_Project:
             # Si el siguiente elemento no es un token, sino un conector 'NOT'
             if nextToken == 'NOT':
                 nextToken = tokens.pop(0)
-                nextPosting = self.get_posting(nextToken)
+                if '?' or '*' in nextToken:
+                    nextPosting = self.get_permuterm(nextToken)
+                else:
+                    nextPosting = self.get_posting(nextToken)
                 nextPosting = self.reverse_posting(nextPosting)
             # Si el siguiente elemento es un token
             else:
@@ -453,6 +463,57 @@ class SAR_Project:
         return: posting list
 
         """
+        
+        term = term + '$'
+
+        # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
+        # Obtenemos la lista de palabras del diccionario de igual longitud, de las que obtendremos la unión de sus posting list
+        if '?' in term:
+            while term[-1] =! '?':
+                term = term[1:] + term[0]
+            term = term[:-1]
+            token_list = self.ptindex.get(term)
+            
+            # Extraemos los tokens con la longitud de la consulta
+            for i in range(len(token_list)):
+                if len(token_list[i]) != len(term):
+                    del token_list[i]
+
+            if len(token_list) == 1:
+                return solve_query(token_list[0])
+            
+            # Calculamos la consulta como union de tokens
+            query = ''
+            for i in range(len(token_list) - 1):
+                query = query + token_list[i] + 'OR'
+            query = query + token_list[len(token_list)]
+
+            return solve_query(query)
+
+
+        # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
+        # Obtenemos la lista de palabras del diccionario de igual longitud, de las que obtendremos la unión de sus posting list
+        if '*' in term:
+            while term[-1] =! '*':
+                term = term[1:] + term[0]
+            term = term[:-1]
+            token_list = self.ptindex.get(term)
+            
+            # Extraemos los tokens con la longitud menor o igual a la consulta
+            for i in range(len(token_list)):
+                if len(token_list[i]) > len(term):
+                    del token_list[i]
+
+            if len(token_list) == 1:
+                return solve_query(token_list[0])
+            
+            # Calculamos la consulta como union de tokens
+            query = ''
+            for i in range(len(token_list) - 1):
+                query = query + token_list[i] + 'OR'
+            query = query + token_list[len(token_list)]
+
+            return solve_query(query)
 
         ##################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
