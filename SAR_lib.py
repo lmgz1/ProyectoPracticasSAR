@@ -178,7 +178,7 @@ class SAR_Project:
                 new_id += 1
         
         ####    PERMUTERM, JAVI ####
-        #▀self.make_permuterm()
+        self.make_permuterm()
         ####
         
         #
@@ -585,9 +585,9 @@ class SAR_Project:
         r = []
         news = list(self.news.keys())
 
-        for i in news:
-            if news[i] not in p:
-                r.append(news[i])
+        for new in news:
+            if new not in p:
+                r.append(new)
 
         return r
 
