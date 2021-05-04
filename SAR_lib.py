@@ -469,7 +469,7 @@ class SAR_Project:
         # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
         # Obtenemos la lista de palabras del diccionario de igual longitud, de las que obtendremos la unión de sus posting list
         if '?' in term:
-            while term[-1] =! '?':
+            while term[-1] != '?':
                 term = term[1:] + term[0]
             term = term[:-1]
             token_list = self.ptindex.get(term)
@@ -494,7 +494,7 @@ class SAR_Project:
         # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
         # Obtenemos la lista de palabras del diccionario de igual longitud, de las que obtendremos la unión de sus posting list
         if '*' in term:
-            while term[-1] =! '*':
+            while term[-1] != '*':
                 term = term[1:] + term[0]
             term = term[:-1]
             token_list = self.ptindex.get(term)
