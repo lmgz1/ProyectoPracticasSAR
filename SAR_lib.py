@@ -177,7 +177,9 @@ class SAR_Project:
                         self.index[token].append(new_id)
                 new_id += 1
         
-        make_permuterm()
+        ####    PERMUTERM, JAVI ####
+        #▀self.make_permuterm()
+        ####
         
         #
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
@@ -527,7 +529,7 @@ class SAR_Project:
                     del token_list[i]
 
             if len(token_list) == 1:
-                return solve_query(token_list[0])
+                return self.solve_query(token_list[0])
             
             # Calculamos la consulta como union de tokens
             query = ''
@@ -535,7 +537,7 @@ class SAR_Project:
                 query = query + token_list[i] + 'OR'
             query = query + token_list[len(token_list)]
 
-            return solve_query(query)
+            return self.solve_query(query)
 
 
         # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
@@ -552,7 +554,7 @@ class SAR_Project:
                     del token_list[i]
 
             if len(token_list) == 1:
-                return solve_query(token_list[0])
+                return self.solve_query(token_list[0])
             
             # Calculamos la consulta como union de tokens
             query = ''
@@ -560,7 +562,7 @@ class SAR_Project:
                 query = query + token_list[i] + 'OR'
             query = query + token_list[len(token_list)]
 
-            return solve_query(query)
+            return self.solve_query(query)
 
         ##################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
