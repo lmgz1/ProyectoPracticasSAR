@@ -352,7 +352,8 @@ class SAR_Project:
                 firstPosting = self.and_posting(firstPosting, nextPosting)
             if connector == 'OR':
                 firstPosting = self.or_posting(firstPosting, nextPosting)
-
+        if firstPosting is None:
+            return []
         return firstPosting
 
         ########################################
@@ -551,7 +552,7 @@ class SAR_Project:
             
             # Extraemos los tokens con la longitud menor o igual a la consulta
             for i in range(len(token_list)):
-                if len(token_list[i]) > len(term):
+                if len(token_list[i]) < len(term):
                     del token_list[i]
 
             if len(token_list) == 1:
