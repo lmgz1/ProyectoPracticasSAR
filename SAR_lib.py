@@ -584,7 +584,9 @@ class SAR_Project:
         """
         r = []
         news = list(self.news.keys())
-
+        
+        if p == None:
+            return news
         for new in news:
             if new not in p:
                 r.append(new)
