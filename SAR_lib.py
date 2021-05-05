@@ -140,6 +140,11 @@ class SAR_Project:
         ##########################################
         ## COMPLETAR PARA FUNCIONALIDADES EXTRA ##
         ##########################################
+        
+        ####    STEEMING, BORJA   #####
+        if self.use_stemming :
+            self.make_stemming()
+        ####
 
     def index_file(self, filename):
         """
@@ -171,7 +176,11 @@ class SAR_Project:
                     else:
                         self.index[token].append(new_id)
                 new_id += 1
-
+        
+        ####    PERMUTERM, JAVI ####
+        self.make_permuterm()
+        ####
+        
         #
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
         # cada noticia es un diccionario con los campos:
@@ -181,7 +190,7 @@ class SAR_Project:
         #
         #
         #
-
+        
         #################
         ### COMPLETAR ###
         #################
@@ -209,13 +218,28 @@ class SAR_Project:
         self.stemmer.stem(token) devuelve el stem del token
 
         """
+        
+        ## Por cada token del índice...
+        for token in self.index:
+            
+            ## Genero su stem.
+            stemmedtoken = self.stemmer.stem(token)
+            
+            ## Si no tengo el stem en el índice de stems, lo añado creándo una lista con el token.
+            if self.sindex.get(stemmedtoken) == None:
+                self.sindex[stemmedtoken] = [token]
+                
+            ## Si tengo el stem en el índice de stems, significa que el stem del token es equivalente 
+            ## al stem de otro token ya añadido, por lo tanto añado el token a la lista de tal stem.
+            else :
+                self.sindex[stemmedtoken].append(token)
 
-        pass
+        
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
         ####################################################
-
+        
     def make_permuterm(self):
         """
         NECESARIO PARA LA AMPLIACION DE PERMUTERM
@@ -223,7 +247,25 @@ class SAR_Project:
         Crea el indice permuterm (self.ptindex) para los terminos de todos los indices.
 
         """
-        pass
+        # Por cada token en el índice, añadimos el símbolo '$' como delimitador
+        # Para cada longitud y rotación posible que contenga el símbolo '$',
+        # # se crea una entrada y se añade el token a la lista
+        for token in self.index.keys():
+            pterm = token + '$'
+            for i in range(len(pterm)):
+                for j in range(0, len(pterm) - 1):
+                    item = pterm[j:]
+                    if '$' in item:
+                        # Si ya existe en el índice permuterm, añadimos el token (si es nuevo) a su lista
+                        if item in self.ptindex.keys():
+                            if token not in self.ptindex.get(item):
+                                self.ptindex[item].append(token)
+                        # Y si no existía, se crea una entrada, con una lista de tokens
+                        else:
+                            self.ptindex[item] = [token]
+                # Siguiente rotación del token
+                pterm = pterm[1:] + pterm[0]
+
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
@@ -268,6 +310,8 @@ class SAR_Project:
             return []
 
         if len(query) == 1:
+            if '?' or '*' in query:
+                return self.get_permuterm(query)
             return self.get_posting(query)
 
         reg = re.compile(r"\w+")
@@ -278,7 +322,10 @@ class SAR_Project:
         if firstToken == 'NOT':
             connector = firstToken
             firstToken = tokens.pop(0)
-            firstPosting = self.get_posting(firstToken)
+            if '?' or '*' in firstToken:
+                firstPosting = self.get_permuterm(firstToken)
+            else:
+                firstPosting = self.get_posting(firstToken)
             firstPosting = self.reverse_posting(firstPosting)
         # Si el primer elemento es un token
         else:
@@ -291,7 +338,10 @@ class SAR_Project:
             # Si el siguiente elemento no es un token, sino un conector 'NOT'
             if nextToken == 'NOT':
                 nextToken = tokens.pop(0)
-                nextPosting = self.get_posting(nextToken)
+                if '?' or '*' in nextToken:
+                    nextPosting = self.get_permuterm(nextToken)
+                else:
+                    nextPosting = self.get_posting(nextToken)
                 nextPosting = self.reverse_posting(nextPosting)
             # Si el siguiente elemento es un token
             else:
@@ -302,7 +352,8 @@ class SAR_Project:
                 firstPosting = self.and_posting(firstPosting, nextPosting)
             if connector == 'OR':
                 firstPosting = self.or_posting(firstPosting, nextPosting)
-
+        if firstPosting is None:
+            return []
         return firstPosting
 
         ########################################
@@ -391,9 +442,9 @@ class SAR_Project:
         return: posting list
 
         """
-        if term in self.index.keys():
-            return self.index.get(term)
-        return []
+        if self.use_stemming:
+            return self.get_stemming(term)
+        return self.index.get(term, [])
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -430,7 +481,28 @@ class SAR_Project:
 
         """
 
+        # Generamos el stem del termino.
         stem = self.stemmer.stem(term)
+        # Consultamos la lista de terminos pertenecientes a dicho stem.
+        tokens = self.sindex.get(stem)
+        listapostings =[]
+        
+        # Recorremos la lista de terminos.
+        for token in tokens:
+            
+            # Obtenemos la posting list de cada termino con el mismo stem y las concatenamos
+            listapostings.append(self.index.get(token))
+            
+            # Eliminamos newid repetidos con la siguiente instrucción, al convertir a dict quitamos repetidos y
+            # lo volvemos a convertir a lista
+            r = list(dict.fromkeys(listapostings))
+            
+            # Ordenamos la lista
+            r.sort()
+            
+        return r
+            
+               
 
         ####################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE STEMMING ##
@@ -448,6 +520,57 @@ class SAR_Project:
         return: posting list
 
         """
+        
+        term = term + '$'
+
+        # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
+        # Obtenemos la lista de palabras del diccionario de igual longitud, de las que obtendremos la unión de sus posting list
+        if '?' in term:
+            while term[-1] != '?':
+                term = term[1:] + term[0]
+            term = term[:-1]
+            token_list = self.ptindex.get(term)
+            
+            # Extraemos los tokens con la longitud de la consulta
+            for i in range(len(token_list)):
+                if len(token_list[i]) != len(term):
+                    del token_list[i]
+
+            if len(token_list) == 1:
+                return self.solve_query(token_list[0])
+            
+            # Calculamos la consulta como union de tokens
+            query = ''
+            for i in range(len(token_list) - 1):
+                query = query + token_list[i] + 'OR'
+            query = query + token_list[len(token_list)]
+
+            return self.solve_query(query)
+
+
+        # Si contiene '?' rotamos hasta dejar el comodín al final de la palabra
+        # Obtenemos la lista de palabras del diccionario de igual longitud, de las que obtendremos la unión de sus posting list
+        if '*' in term:
+            while term[-1] != '*':
+                term = term[1:] + term[0]
+            term = term[:-1]
+            token_list = self.ptindex.get(term)
+            
+            # Extraemos los tokens con la longitud menor o igual a la consulta
+            for i in range(len(token_list)):
+                if len(token_list[i]) < len(term):
+                    del token_list[i]
+
+            if len(token_list) == 1:
+                return self.solve_query(token_list[0])
+            
+            # Calculamos la consulta como union de tokens
+            query = ''
+            for i in range(len(token_list) - 1):
+                query = query + token_list[i] + 'OR'
+            query = query + token_list[len(token_list)]
+
+            return self.solve_query(query)
 
         ##################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA PERMUTERM ##
@@ -469,10 +592,12 @@ class SAR_Project:
         """
         r = []
         news = list(self.news.keys())
-
-        for i in news:
-            if news[i] not in p:
-                r.append(news[i])
+        
+        if p == None:
+            return news
+        for new in news:
+            if new not in p:
+                r.append(new)
 
         return r
 
@@ -634,11 +759,12 @@ class SAR_Project:
         """
         NECESARIO PARA TODAS LAS VERSIONES
 
-        Resuelve una consulta y la muestra informacion de las noticias recuperadas.
+        Resuelve una consulta y la muestra informacion de las noticias recuperadas. Para ello a partir de la posting list proporcionada por solve_query extraemos
+        la ruta al fichero JSON asociado a cada noticia correspondiente y extraemos la información necesaria
         Consideraciones:
 
         - En funcion del valor de "self.show_snippet" se mostrara una informacion u otra.
-        - Si se implementa la opcion de ranking y en funcion del valor de self.use_ranking debera llamar a self.rank_result
+        - Si se implementa la opcion de ranking y en funcion del valor de self.use_ranking debera llamar a self.rank_result        
 
         param:  "query": query que se debe resolver.
 
@@ -649,6 +775,22 @@ class SAR_Project:
         if self.use_ranking:
             result = self.rank_result(result, query)
 
+        print('========================================')
+        print('Query: '+str(query)+'\n')
+        print('Number of results: '+str(len(result))+'\n')
+        i=0
+        
+        for noticia in result:
+            i=1+i
+            fileId   = self.news[noticia]
+            with open(self.docs[fileId[0]]) as f:
+                jsonNoticia = json.load(f)            
+            jsonNoticia=jsonNoticia[fileId[1]]
+            print('#%s  (0) (%s) (%s) %s: (%s)  \n'%(i,noticia,jsonNoticia['date'],jsonNoticia['title'],jsonNoticia['keywords']))
+            if(self.show_snippet):
+                print('Summary: %s \n'%(jsonNoticia['summary']))
+        print('========================================')
+        return len(result)
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
         ########################################
@@ -659,8 +801,8 @@ class SAR_Project:
 
         Ordena los resultados de una query.
 
-        param:  "result": lista de resultados sin ordenar
-                "query": query, puede ser la query original, la query procesada o una lista de terminos
+        param:  "result": lista de resultados sin ordenar , postinglist sin ordenar.
+                "query": query, puede ser la query original, la query procesada o una lista de terminos. Query original en este caso.
 
 
         return: la lista de resultados ordenada
@@ -668,7 +810,6 @@ class SAR_Project:
         """
 
         pass
-
         ###################################################
         ## COMPLETAR PARA FUNCIONALIDAD EXTRA DE RANKING ##
         ###################################################
