@@ -325,7 +325,8 @@ class SAR_Project:
         tokenized = re.findall("(\(|\)|[\w|:]+)", query)
         return self._solve_query_parenthesis(tokenized)
 
-    def _solve_query_parenthesis(self, query):
+    def _solve_query_parenthesis(self, query, ind=""):
+        #print(ind, " ".join(query))
         value = []
         conjunction = "OR"
         negation = False
@@ -336,21 +337,28 @@ class SAR_Project:
                 n = 1
                 i += 1
                 n_query = []
-                while n > 0:
+                while True:
                     if query[i] == "(":
                         n += 1
                     elif query[i] == ")":
+                        if n == 1:
+                            break
                         n -= 1
                     n_query.append(query[i])
-                b = self._solve_query_parenthesis(n_query)
+                    i += 1
+                b = self._solve_query_parenthesis(n_query, ind+"    ")
+                #print(ind, len(value), conjunction, "NOT" if negation else "", len(b))
                 value = self.operate(value, b, conjunction, negation)
                 negation = False
             elif token == "NOT":
                 negation = True
             elif token == "AND" or token == "OR":
                 conjunction = token
+                #print(ind, token)
             else:
+                #print(ind, len(value), conjunction, "NOT" if negation else "", len(self.get_posting(token)))
                 value = self.operate(value, self.get_posting(token), conjunction, negation)
+                negation = False
             i += 1
         return value
 
@@ -362,6 +370,8 @@ class SAR_Project:
             return self.and_posting(a, b)
         elif op == "OR":
             return self.or_posting(a, b)
+        else:
+            print("ERROR")
 
 
     def get_posting(self, term, field='article'):
@@ -381,7 +391,9 @@ class SAR_Project:
         return: posting list
 
         """
-        return self.index.get(term)
+        if term in self.index.keys():
+            return self.index.get(term)
+        return []
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
