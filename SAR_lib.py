@@ -254,18 +254,18 @@ class SAR_Project:
         for token in self.index.keys():
             pterm = token + '$'
             for i in range(len(pterm)):
-                for j in range(0, len(pterm) - 1):
-                    print(i, j)
-                    print(len(self.ptindex))
-                    item = pterm[j:]
-                    if '$' in item:
-                        # Si ya existe en el índice permuterm, añadimos el token (si es nuevo) a su lista
-                        if item in self.ptindex.keys():
-                            if token not in self.ptindex.get(item):
-                                self.ptindex[item].append(token)
-                        # Y si no existía, se crea una entrada, con una lista de tokens
-                        else:
-                            self.ptindex[item] = [token]
+                #for j in range(0, len(pterm) - 1):
+                #print(i, j)
+                #print(len(self.ptindex))
+                    #item = pterm[j:]
+                if '$' in pterm:
+                    # Si ya existe en el índice permuterm, añadimos el token (si es nuevo) a su lista
+                    if pterm in self.ptindex.keys():
+                        if token not in self.ptindex.get(pterm):
+                            self.ptindex[pterm].append(token)
+                    # Y si no existía, se crea una entrada, con una lista de tokens
+                    else:
+                        self.ptindex[pterm] = [token]
                 # Siguiente rotación del token
                 pterm = pterm[1:] + pterm[0]
 
@@ -386,9 +386,7 @@ class SAR_Project:
             elif '*' in firstToken:
                 firstPosting = self.get_permuterm(firstToken)
             else:
-                print("$$$")
                 firstPosting = self.get_posting(firstToken)
-                #print(firstPosting)
             firstPosting = self.reverse_posting(firstPosting)
         # Si el primer elemento es un token
         else:
