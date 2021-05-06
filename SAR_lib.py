@@ -480,11 +480,16 @@ class SAR_Project:
         return: posting list
 
         """
-
+        
         # Generamos el stem del termino.
         stem = self.stemmer.stem(term)
         # Consultamos la lista de terminos pertenecientes a dicho stem.
         tokens = self.sindex.get(stem)
+        
+        # Stem no está en el índice?
+        if tokens == None:
+            return []
+        
         listapostings =[]
         
         # Recorremos la lista de terminos.
@@ -493,12 +498,12 @@ class SAR_Project:
             # Obtenemos la posting list de cada termino con el mismo stem y las concatenamos
             listapostings.append(self.index.get(token))
             
-            # Eliminamos newid repetidos con la siguiente instrucción, al convertir a dict quitamos repetidos y
-            # lo volvemos a convertir a lista
-            r = list(dict.fromkeys(listapostings))
+        # Eliminamos newid repetidos con la siguiente instrucción, al convertir a dict quitamos repetidos y
+        # lo volvemos a convertir a lista
+        r = list(dict.fromkeys(listapostings))
             
-            # Ordenamos la lista
-            r.sort()
+        # Ordenamos la lista
+        r.sort()
             
         return r
             
