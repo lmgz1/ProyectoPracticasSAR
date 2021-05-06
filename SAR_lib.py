@@ -142,7 +142,7 @@ class SAR_Project:
         ##########################################
         
         ####    STEEMING, BORJA   #####
-        if self.use_stemming :
+        if self.stemming:    
             self.make_stemming()
         ####
 
@@ -233,6 +233,7 @@ class SAR_Project:
             ## al stem de otro token ya añadido, por lo tanto añado el token a la lista de tal stem.
             else :
                 self.sindex[stemmedtoken].append(token)
+        
 
         
 
@@ -254,6 +255,8 @@ class SAR_Project:
             pterm = token + '$'
             for i in range(len(pterm)):
                 for j in range(0, len(pterm) - 1):
+                    print(i, j)
+                    print(len(self.ptindex))
                     item = pterm[j:]
                     if '$' in item:
                         # Si ya existe en el índice permuterm, añadimos el token (si es nuevo) a su lista
@@ -278,7 +281,64 @@ class SAR_Project:
         Muestra estadisticas de los indices
         
         """
-        pass
+        print("=" * 40)
+        if self.multifield:
+            print("Number of indexed days: " + str(len(self.dates)))
+            print("-" * 40)
+            print("Number of indexed news: " + str(len(self.news)))
+            print("-" * 40)
+            print("TOKENS:")
+            print("\t# tokens in 'title': " + str(len(self.title)))
+            print("\t# tokens in 'date': " + str(len(self.dates)))
+            print("\t# tokens in 'keywords': " + str(len(self.keywords)))
+            print("\t# tokens in 'article': " + str(len(self.article)))
+            print("\t# tokens in 'summary': " + str(len(self.summary)))
+            print("-" * 40)
+        else:
+            #print("Number of indexed days: " + str(len(self.dates)))
+            #print("-" * 40)
+            print("Number of indexed news: " + str(len(self.news)))
+            print("-" * 40)
+            print("TOKENS: " + str(len(self.index)))
+            print("-" * 40)
+            #print("Positional queries are NOT allowed.")
+            #print("-" * 40)
+
+        if self.permuterm:
+
+            if self.multifield:
+                print("PERMUTERMS:")
+                print("\t# permuterms in 'title': " + str(len(self.pttitle)))
+                print("\t# permuterms in 'date': " + str(len(self.ptdates)))
+                print("\t# permuterms in 'keywords': " + str(len(self.ptkeywords)))
+                print("\t# permuterms in 'article': " + str(len(self.ptarticle)))
+                print("\t# permuterms in 'summary': " + str(len(self.ptsummary)))
+                print("-" * 40)
+            else:
+                print("PERMUTERMS:" + str(len(self.ptindex)))
+                print("-" * 40)
+
+        if self.stemming == True:
+            #if self.multifield == True:
+                #print("STEMS:")
+                #print("\t# stems in 'title': " + str(len(self.stitle)))
+                #print("\t# stems in 'date': " + str(len(self.sdates)))
+                #print("\t# stems in 'keywords': " + str(len(self.skeywords)))
+                #print("\t# stems in 'article': " + str(len(self.sarticle)))
+                #print("\t# stems in 'summary': " + str(len(self.ssummary)))
+                #print("-" * 40)
+            #else:
+                print("STEMS: " + str(len(self.sindex)))
+                print("-" * 40)
+        
+        print ("Parentheses queries are allowed")
+        print("-" * 40)
+
+        if self.positional == True:
+            print("Positional queries are allowed.")
+        else:
+            print("Positional queries are NOT allowed.")
+        print("=" * 40)
 
         ########################################
         ## COMPLETAR PARA TODAS LAS VERSIONES ##
@@ -316,16 +376,19 @@ class SAR_Project:
 
         reg = re.compile(r"\w+")
         tokens = reg.findall(query)
-
         firstToken = tokens.pop(0)
         # Si el primer elemento no es un token, sino un conector 'NOT'
         if firstToken == 'NOT':
             connector = firstToken
             firstToken = tokens.pop(0)
-            if '?' or '*' in firstToken:
+            if '?' in firstToken:
+                firstPosting = self.get_permuterm(firstToken)
+            elif '*' in firstToken:
                 firstPosting = self.get_permuterm(firstToken)
             else:
+                print("$$$")
                 firstPosting = self.get_posting(firstToken)
+                #print(firstPosting)
             firstPosting = self.reverse_posting(firstPosting)
         # Si el primer elemento es un token
         else:
@@ -338,7 +401,9 @@ class SAR_Project:
             # Si el siguiente elemento no es un token, sino un conector 'NOT'
             if nextToken == 'NOT':
                 nextToken = tokens.pop(0)
-                if '?' or '*' in nextToken:
+                if '?' in nextToken:
+                    nextPosting = self.get_permuterm(nextToken)
+                elif '*' in nextToken:
                     nextPosting = self.get_permuterm(nextToken)
                 else:
                     nextPosting = self.get_posting(nextToken)
@@ -352,6 +417,7 @@ class SAR_Project:
                 firstPosting = self.and_posting(firstPosting, nextPosting)
             if connector == 'OR':
                 firstPosting = self.or_posting(firstPosting, nextPosting)
+                
         if firstPosting is None:
             return []
         return firstPosting
@@ -442,8 +508,13 @@ class SAR_Project:
         return: posting list
 
         """
+        
+        #### STEMMING ####
         if self.use_stemming:
             return self.get_stemming(term)
+        ####        ####
+        
+        
         return self.index.get(term, [])
 
         ########################################
@@ -490,23 +561,24 @@ class SAR_Project:
         if tokens == None:
             return []
         
-        listapostings =[]
+        r = aux = pl = []
         
         # Recorremos la lista de terminos.
         for token in tokens:
             
             # Obtenemos la posting list de cada termino con el mismo stem y las concatenamos
-            listapostings.append(self.index.get(token))
+            pl = self.index.get(token)
+            aux = self.or_posting(r, pl)
+            r = aux
             
         # Eliminamos newid repetidos con la siguiente instrucción, al convertir a dict quitamos repetidos y
         # lo volvemos a convertir a lista
-        r = list(dict.fromkeys(listapostings))
+        #r = set(listapostings)
             
         # Ordenamos la lista
         r.sort()
             
         return r
-            
                
 
         ####################################################
@@ -596,11 +668,12 @@ class SAR_Project:
 
         """
         r = []
-        news = list(self.news.keys())
+        n = list(self.news.keys())
         
-        if p == None:
-            return news
-        for new in news:
+        #if p is None:
+        # return n
+        
+        for new in n:
             if new not in p:
                 r.append(new)
 
@@ -639,9 +712,9 @@ class SAR_Project:
         r = []
         i = j = 0
         while i < len(p1) and j < len(p2):
-            if (p1[i] == p2[j]):  # La comparación no debe dar problemas aún siendo strings #
-                r.append(p1[i])  # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
-                i = i + 1  # siendo el primero alfanumericamente inferior al segundo #
+            if (p1[i] == p2[j]):
+                r.append(p1[i])
+                i = i + 1
                 j = j + 1
             elif (p1[i] < p2[j]):
                 i = i + 1
@@ -694,9 +767,9 @@ class SAR_Project:
         r = []
         i = j = 0
         while i < len(p1) and j < len(p2):
-            if (p1[i] == p2[j]):  # La comparación no debe dar problemas aún siendo strings #
-                r.append(p1[i])  # Por ejemplo p1[i] < p2[j] podría comparar "doc_id-31" con "doc_id-36"#
-                i = i + 1  # siendo el primero alfanumericamente inferior al segundo #
+            if (p1[i] == p2[j]):
+                r.append(p1[i])
+                i = i + 1
                 j = j + 1
             elif p1[i] < p2[j]:
                 r.append(p1[i])
