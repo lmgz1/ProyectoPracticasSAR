@@ -370,7 +370,7 @@ class SAR_Project:
             return []
 
         if "(" in query:
-            self.solve_query_parenthesis(query)
+            return self.solve_query_parenthesis(query)
 
         if len(query) == 1:
             if '?' in query:
