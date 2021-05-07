@@ -1,0 +1,14 @@
+#
+# PERMUTERM
+#
+casa	412
+cosa	139
+c*sa	245
+c?sa	174
+c*sa AND c?sa	174
+c*sa OR c?sa	245
+c*sa AND NOT c?sa	71
+ma?a AND NOT mata	69
+bar*na OR val*cia OR pa*s	590
+date:201*10	23
+date:201*3	94

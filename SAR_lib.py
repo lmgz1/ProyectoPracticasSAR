@@ -317,7 +317,7 @@ class SAR_Project:
                 print("\t# permuterms in 'summary': " + str(len(self.ptsummary)))
                 print("-" * 40)
             else:
-                print("PERMUTERMS:" + str(len(self.ptindex)))
+                print("PERMUTERMS: " + str(len(self.ptindex)))
                 print("-" * 40)
 
         if self.stemming == True:
