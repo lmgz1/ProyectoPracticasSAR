@@ -370,9 +370,12 @@ class SAR_Project:
             return []
 
         if len(query) == 1:
-            if '?' or '*' in query:
+            if '?' in query:
                 return self.get_permuterm(query)
-            return self.get_posting(query)
+            elif '*' in query:
+                return self.get_permuterm(query)
+            else:
+                return self.get_posting(query)
 
         reg = re.compile(r"\w+")
         tokens = reg.findall(query)
