@@ -437,8 +437,9 @@ class SAR_Project:
         return: posting list con el resultado de la query
 
         """
-        tokenized = re.findall("(\(|\)|[\w|:]+)", query)
-        return self._solve_query_parenthesis(tokenized)
+        tokenized = re.findall(r"(\(|\)|[\w|:]+)", query)
+
+        self.solve_query(tokenized)
 
     def _solve_query_parenthesis(self, query, ind=""):
         #print(ind, " ".join(query))
@@ -703,11 +704,11 @@ class SAR_Project:
         r = []
         i = j = 0
         while i < len(p1) and j < len(p2):
-            if (p1[i] == p2[j]):
+            if p1[i] == p2[j]:
                 r.append(p1[i])
                 i = i + 1
                 j = j + 1
-            elif (p1[i] < p2[j]):
+            elif p1[i] < p2[j]:
                 i = i + 1
             else:
                 j = j + 1
