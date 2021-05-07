@@ -370,7 +370,7 @@ class SAR_Project:
             return []
 
         if "(" in query:
-            return self.solve_query_parenthesis(query)
+            self.solve_query_parenthesis(query)
 
         if len(query) == 1:
             if '?' in query:
@@ -445,7 +445,7 @@ class SAR_Project:
         """
         tokenized = re.findall(r"(\(|\)|[\w|:]+)", query)
 
-        self.solve_query(tokenized)
+        self._solve_query_parenthesis(tokenized)
 
     def _solve_query_parenthesis(self, query, ind=""):
         #print(ind, " ".join(query))
@@ -479,7 +479,7 @@ class SAR_Project:
                 #print(ind, token)
             else:
                 #print(ind, len(value), conjunction, "NOT" if negation else "", len(self.get_posting(token)))
-                value = self.operate(value, self.get_posting(token), conjunction, negation)
+                value = self.operate(value, self.solve_query(token), conjunction, negation)
                 negation = False
             i += 1
         return value
