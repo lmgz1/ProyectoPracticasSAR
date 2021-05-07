@@ -369,6 +369,9 @@ class SAR_Project:
         if query is None or len(query) == 0:
             return []
 
+        if "(" in query:
+            return self.solve_query_parenthesis(query)
+
         if len(query) == 1:
             if '?' in query:
                 return self.get_permuterm(query)
