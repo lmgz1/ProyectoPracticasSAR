@@ -445,10 +445,9 @@ class SAR_Project:
         """
         tokenized = re.findall(r"(\(|\)|[\w|:]+)", query)
 
-        self._solve_query_parenthesis(tokenized)
+        return self._solve_query_parenthesis(tokenized)
 
     def _solve_query_parenthesis(self, query, ind=""):
-        #print(ind, " ".join(query))
         value = []
         conjunction = "OR"
         negation = False
@@ -469,7 +468,6 @@ class SAR_Project:
                     n_query.append(query[i])
                     i += 1
                 b = self._solve_query_parenthesis(n_query, ind+"    ")
-                #print(ind, len(value), conjunction, "NOT" if negation else "", len(b))
                 value = self.operate(value, b, conjunction, negation)
                 negation = False
             elif token == "NOT":
@@ -478,11 +476,11 @@ class SAR_Project:
                 conjunction = token
                 #print(ind, token)
             else:
-                #print(ind, len(value), conjunction, "NOT" if negation else "", len(self.get_posting(token)))
                 value = self.operate(value, self.solve_query(token), conjunction, negation)
                 negation = False
             i += 1
-        return value
+
+        return value.copy()
 
 
     def operate(self, a, b, op, not_b):
