@@ -371,10 +371,16 @@ class SAR_Project:
         if query is None or len(query) == 0:
             return []
 
+        if "(" in query:
+            return self.solve_query_parenthesis(query)
+
         if len(query) == 1:
-            if '?' or '*' in query:
+            if '?' in query:
                 return self.get_permuterm(query)
-            return self.get_posting(query)
+            elif '*' in query:
+                return self.get_permuterm(query)
+            else:
+                return self.get_posting(query)
 
         reg = re.compile(r"\w+")
         tokens = reg.findall(query)
@@ -439,11 +445,11 @@ class SAR_Project:
         return: posting list con el resultado de la query
 
         """
-        tokenized = re.findall("(\(|\)|[\w|:]+)", query)
+        tokenized = re.findall(r"(\(|\)|[\w|:]+)", query)
+
         return self._solve_query_parenthesis(tokenized)
 
     def _solve_query_parenthesis(self, query, ind=""):
-        #print(ind, " ".join(query))
         value = []
         conjunction = "OR"
         negation = False
@@ -464,7 +470,6 @@ class SAR_Project:
                     n_query.append(query[i])
                     i += 1
                 b = self._solve_query_parenthesis(n_query, ind+"    ")
-                #print(ind, len(value), conjunction, "NOT" if negation else "", len(b))
                 value = self.operate(value, b, conjunction, negation)
                 negation = False
             elif token == "NOT":
@@ -473,11 +478,11 @@ class SAR_Project:
                 conjunction = token
                 #print(ind, token)
             else:
-                #print(ind, len(value), conjunction, "NOT" if negation else "", len(self.get_posting(token)))
-                value = self.operate(value, self.get_posting(token), conjunction, negation)
+                value = self.operate(value, self.solve_query(token), conjunction, negation)
                 negation = False
             i += 1
-        return value
+
+        return value.copy()
 
 
     def operate(self, a, b, op, not_b):
@@ -705,11 +710,11 @@ class SAR_Project:
         r = []
         i = j = 0
         while i < len(p1) and j < len(p2):
-            if (p1[i] == p2[j]):
+            if p1[i] == p2[j]:
                 r.append(p1[i])
                 i = i + 1
                 j = j + 1
-            elif (p1[i] < p2[j]):
+            elif p1[i] < p2[j]:
                 i = i + 1
             else:
                 j = j + 1
