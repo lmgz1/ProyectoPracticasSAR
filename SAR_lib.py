@@ -145,6 +145,11 @@ class SAR_Project:
         if self.stemming:    
             self.make_stemming()
         ####
+        
+        ####    PERMUTERM, JAVI ####
+        if self.permuterm:
+            self.make_permuterm()
+        ####
 
     def index_file(self, filename):
         """
@@ -177,9 +182,6 @@ class SAR_Project:
                         self.index[token].append(new_id)
                 new_id += 1
         
-        ####    PERMUTERM, JAVI ####
-        self.make_permuterm()
-        ####
         
         #
         # "jlist" es una lista con tantos elementos como noticias hay en el fichero,
@@ -307,7 +309,7 @@ class SAR_Project:
         if self.permuterm:
 
             if self.multifield:
-                print("PERMUTERMS:")
+                print("PERMUTERMS: ")
                 print("\t# permuterms in 'title': " + str(len(self.pttitle)))
                 print("\t# permuterms in 'date': " + str(len(self.ptdates)))
                 print("\t# permuterms in 'keywords': " + str(len(self.ptkeywords)))
